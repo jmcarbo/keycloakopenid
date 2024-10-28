@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -22,7 +23,7 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie("Authorization")
 	if err == nil && strings.HasPrefix(cookie.Value, "Bearer ") {
 		token := strings.TrimPrefix(cookie.Value, "Bearer ")
-		fmt.Printf("token = %+v\n", token)
+		_, _ = os.Stdin.WriteString(fmt.Sprintf("token = %+v\n", token))
 
 		ok, err := k.verifyToken(token)
 		fmt.Printf("ok = %+v\n", ok)
@@ -59,28 +60,28 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		if k.UseAuthHeader {
 			// Optionally set the Bearer token to the Authorization header.
-			req.Header.Set("Authorization", "Bearer " + token)
+			req.Header.Set("Authorization", "Bearer "+token)
 		}
-		
+
 		k.next.ServeHTTP(rw, req)
 	} else {
 		authCode := req.URL.Query().Get("code")
 		if authCode == "" {
-			fmt.Printf("code is missing, redirect to keycloak\n")
+			os.Stdin.WriteString(fmt.Sprintf("code is missing, redirect to keycloak\n"))
 			k.redirectToKeycloak(rw, req)
 			return
 		}
 
 		stateBase64 := req.URL.Query().Get("state")
 		if stateBase64 == "" {
-			fmt.Printf("state is missing, redirect to keycloak\n")
+			os.Stdin.WriteString(fmt.Sprintf("state is missing, redirect to keycloak\n"))
 			k.redirectToKeycloak(rw, req)
 			return
 		}
 
-		fmt.Printf("exchange auth code called\n")
+		os.Stdin.WriteString(fmt.Sprintf("exchange auth code called\n"))
 		token, err := k.exchangeAuthCode(req, authCode, stateBase64)
-		fmt.Printf("exchange auth code finished %+v\n", token)
+		os.Stdin.WriteString(fmt.Sprintf("exchange auth code finished %+v\n", token))
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
@@ -88,7 +89,7 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		if k.UseAuthHeader {
 			// Optionally set the Bearer token to the Authorization header.
-			req.Header.Set("Authorization", "Bearer " + token)
+			req.Header.Set("Authorization", "Bearer "+token)
 		}
 
 		authCookie := &http.Cookie{
@@ -218,7 +219,7 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 		"client_id":     {k.ClientID},
 		"redirect_uri":  {originalURL},
 		"state":         {stateBase64},
-		"scope":				 {k.Scope},
+		"scope":         {k.Scope},
 	}.Encode()
 
 	http.Redirect(rw, req, redirectURL.String(), http.StatusTemporaryRedirect)
