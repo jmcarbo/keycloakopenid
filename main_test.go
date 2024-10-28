@@ -11,10 +11,10 @@ import (
 func TestServeHTTP(t *testing.T) {
 	// Setup
 	config := CreateConfig()
-	config.KeycloakURL = "auth.bochslerfinance.com"
-	config.KeycloakRealm = "bochsler"
-	config.ClientID = "keycloakMiddleware"
-	config.ClientSecret = "uc0yKKpQsOqhggsG4eK7mDU3glT81chn"
+	config.KeycloakURL = "http://keycloak.192.168.1.39.nip.io:8081"
+	config.KeycloakRealm = "oe"
+	config.ClientID = "myclient"
+	config.ClientSecret = "1MspTuBjLxYwQfhTlRBNGoUCYRJgFzxr"
 	config.Scope = "openid profile email"
 
 	// Create a new instance of our middleware
@@ -26,7 +26,7 @@ func TestServeHTTP(t *testing.T) {
 	}
 
 	fmt.Printf("%+v\n", keycloakMiddleware)
-	req, err := http.NewRequest("GET", "http://guidelines.bochslerfinance.com/", nil)
+	req, err := http.NewRequest("GET", "http://grafana.127.0.0.1.nip.io:8081/", nil)
 	if err != nil {
 		t.Fatal("Expected no error while creating http request, got:", err)
 	}

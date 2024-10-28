@@ -67,7 +67,7 @@ func (k *keycloakAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	} else {
 		authCode := req.URL.Query().Get("code")
 		if authCode == "" {
-			os.Stdin.WriteString(fmt.Sprintf("code is missing, redirect to keycloak\n"))
+			fmt.Printf("===============> code is missing, redirect to keycloak\n")
 			k.redirectToKeycloak(rw, req)
 			return
 		}
@@ -198,6 +198,13 @@ func (k *keycloakAuth) exchangeAuthCode(req *http.Request, authCode string, stat
 func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Request) {
 	scheme := req.Header.Get("X-Forwarded-Proto")
 	host := req.Header.Get("X-Forwarded-Host")
+
+	if scheme == "" {
+		scheme = req.URL.Scheme
+	}
+	if host == "" {
+		host = req.Host
+	}
 	originalURL := fmt.Sprintf("%s://%s%s", scheme, host, req.RequestURI)
 
 	state := state{
@@ -222,6 +229,7 @@ func (k *keycloakAuth) redirectToKeycloak(rw http.ResponseWriter, req *http.Requ
 		"scope":         {k.Scope},
 	}.Encode()
 
+	fmt.Printf("===============> redirecting to keycloak: %s\n", redirectURL.String())
 	http.Redirect(rw, req, redirectURL.String(), http.StatusTemporaryRedirect)
 }
 
